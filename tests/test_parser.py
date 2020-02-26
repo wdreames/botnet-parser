@@ -95,14 +95,11 @@ class TestParser(unittest.TestCase):
         self.parser2.find_similar_dns_ips()
         keys = correct_multiple_pointers2.keys()
         for key in keys:
-            # Tests if the correct keys exist in the dictionary
-            self.assertTrue(self.parser2.multiple_pointers[key])
-            # Tests if the length of the dictionary is correct
+            self.assertTrue(self.parser2.multiple_pointers[key])  # Tests if the correct keys exist in the dictionary
             self.assertEqual(len(correct_multiple_pointers2[key]), len(self.parser2.multiple_pointers[key]),
                              msg="The length of multiple_pointers with the key {} is meant to be {} "
                                  "but it is actually {}".format(key, len(correct_multiple_pointers2[key]),
                                                                 len(self.parser2.multiple_pointers[key])))
-            # Tests if the information in the dictionary is correct
             self.assertEqual(correct_multiple_pointers2[key], self.parser2.multiple_pointers[key])
 
     def test_correct_locations(self):

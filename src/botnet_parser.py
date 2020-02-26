@@ -27,22 +27,20 @@ def gather_input(original_url):
 
 # Tests to ensure the input from the user is valid then collects the appropriate data
 def test_input(parse_this, original_url):
-    print()  # Makes a space between input and output
+    print()
     name = parse_this.lower().strip()
-    if parse_this.lower() == 'exit' or parse_this.lower() == 'quit':
-        print('Done.')
-        exit()
-    elif parse_this.upper().strip() == "C2 IP FEED":
-        run_c2_data(original_url)
-    else:
-        append = "{}-master.txt".format(name)
-        web_url = original_url + append
-        print("Accessing {}'s master feed ...\n".format(name.capitalize()))
-        if requests.get(web_url):  # Tests if the given input exists
-            run_master_data(web_url, name.capitalize())
+    if parse_this.lower() != 'exit' and parse_this.lower() != 'quit':
+        if parse_this.upper().strip() == "C2 IP FEED":
+            run_c2_data(original_url)
         else:
-            print("Invalid input. Please enter the name of a intel feed on the given website.")
-    gather_input(original_url)
+            append = "{}-master.txt".format(name)
+            web_url = original_url + append
+            print("Accessing {}'s master feed ...\n".format(name.capitalize()))
+            if requests.get(web_url):  # Tests if the given input exists
+                run_master_data(web_url, name.capitalize())
+            else:
+                print("Invalid input. Please enter the name of a intel feed on the given website.")
+        gather_input(original_url)
 
 
 # Collects and outputs data from one of the master links
@@ -86,15 +84,13 @@ def run_master_data(web_url, name):
 def run_c2_data(original_url):
     web_url = original_url + 'c2-ipmasterlist.txt'
     ips = {}
-    response = requests.get(web_url)  # Connect to the url
-    file = response.text.split('\n')  # Split the text into separate lines
-    csv_reader = csv.reader(file)  # Creates a csv
+    response = requests.get(web_url)
+    file = response.text.split('\n')
+    csv_reader = csv.reader(file)
     for data in csv_reader:
-        # If the line is commented out, do not attempt to retrieve data
+        # Don't retrieve data from commented lines
         if len(data) > 0 and data[0][0] != '#':
-            # Takes the name of the system out of the line.
-            # Text is usually "IP used by (name) C&C" which means that if it is split by ' ',
-            # the name will be at index 3
+            # Text is usually "IP used by (name) C&C". After being split the name will be at index 3
             name = data[1].split(' ')[3]
             # Adds to the dictionary
             if data[0] in ips:
@@ -105,7 +101,7 @@ def run_c2_data(original_url):
     # Adds the repeating IPs to a separate dictionary
     repeating_ips = {}
     for ip in ips:
-        if len(ips[ip]) > 1:  # Tests if there is more than one IP in the list (tests if it is repeating)
+        if len(ips[ip]) > 1:
             repeating_ips[ip] = ips[ip]
 
     repeating_ips = collections.OrderedDict(repeating_ips)
@@ -133,30 +129,30 @@ class BotnetParser:
 
     # Prepares a url for parsing by a csv
     def master_data_from_url(self, url):
-        response = requests.get(url)  # Connect to the url
-        file = response.text.split('\n')  # Split the text into separate lines
-        csv_reader = csv.reader(file)  # Creates a csv
-        self.gather_master_data(csv_reader)  # Gathers the data
+        response = requests.get(url)
+        file = response.text.split('\n')
+        csv_reader = csv.reader(file)
+        self.gather_master_data(csv_reader)
 
     # Only used during testing
     # Prepares a file for parsing by a csv
     def _master_data_from_file(self, file_path):
-        with open(file_path) as file:  # Opens the file
-            csv_reader = csv.reader(file)  # Creates a csv
-            self.gather_master_data(csv_reader)  # Gathers the data
+        with open(file_path) as file:
+            csv_reader = csv.reader(file)
+            self.gather_master_data(csv_reader)
 
     # Gathers data through the use of a csv
     def gather_master_data(self, csv_reader):
         for data in csv_reader:
             # If the line is commented out, do not attempt to retrieve data
             if len(data) > 0 and data[0][0] != '#':
+
                 # Gathers the data
                 current_domain = data[0]
                 current_ips = data[1].split('|')
-                # For some reason some IPs can be left blank. Since these lines are missing data, we will not use them.
+                # Don't use lines with missing data
                 if current_ips[0] == '':
                     break
-                # I did not have a need for the DNS domains, so I did not use data[2]
                 current_dns_ips = data[3].split('|')
 
                 # Stores the data
@@ -169,51 +165,42 @@ class BotnetParser:
                         else:
                             # Sets it equal to two in order to include the ip inside the set and the ip being compared
                             self.repeating_ips_count[current_ip] = 2
-                    # Otherwise it gets added to the list of ips and a new BotInfo instance is made
                     else:
-                        # Adds the ip and info to the ips and bots set / dict
                         self.ips.append(current_ip)
                         self.bots[current_ip] = BotInfo(current_ip, current_dns_ips)
-
-                # Adds the current domain to the set of all domains
                 self.domains.add(current_domain)
 
     # Finds the location of each ip address that has been found
     # Because finding the location is so time consuming, it is done separately
     def find_countries(self):
-        # Print statements added due to long amounts of time required to find the location of an IP
         print("Finding the locations of all IPs ...")
         for i, ip in enumerate(self.bots):
             if self.can_find_locations:  # Makes sure we can find locations before calling the method
                 percentage = int(i / len(self.bots) * 100)
                 if percentage != 0 and percentage % 10 == 0:
-                    print('{}% complete'.format(percentage))  # Prints out the progress as a percentage
-                self._find_location(ip, self.countries)  # Finds the location of the current IP
+                    print('{}% complete'.format(percentage))
+                self._find_location(ip, self.countries)
             else:
                 break
         print("Finished finding the locations of all IPs")
 
+    # Method used to find the location (country) of a given IP Address
     # Method takes a long time to ping each address
     # The method can also have a limited number of queries per day which is problematic
-    # Input: an IP address as a string, and a dictionary to store the information
-    # Output: The country name in abbreviated form returned as a two character string
     def _find_location(self, ip, countries):
-        # The library used to find the locations sometimes does not have every IP in its database.
-        # To work around this I've added a try catch.
         try:
-            response = DbIpCity.get(ip)  # Gathers info from the library
-            current_country = response.country  # Gets the country code
+            # Gathers info from the library and stores the country code
+            response = DbIpCity.get(ip)
+            current_country = response.country
             # Adds to the dictionary
             if current_country in self.countries:
                 self.countries[current_country] += 1
             else:
                 self.countries[current_country] = 1
-        except KeyError:  # Error that occurs when the IP cannot be found
+        except KeyError:
             print("Error: \"{}\" could not be found".format(ip))
-        except InvalidRequestError as e:  # Error that occurs when we cannot find locations of IPs
+        except InvalidRequestError as e:
             print("Error: maximum number of queries per day exceeded")
-            # After discovering we cannot find locations of IPs currently, can_find_locations is changed to False
-            # So the method is not called again
             self.can_find_locations = False
 
     # Finds DNS IP Addresses that are found in multiple lines, as well as what original IP they are connected to
@@ -226,4 +213,5 @@ class BotnetParser:
 
 if __name__ == '__main__':
     original_url = "https://osint.bambenekconsulting.com/feeds/"
-    gather_input(original_url)  # Enters into the input loop, and outputs information until the user decides to stop
+    gather_input(original_url)
+    print('Done.')

@@ -14,9 +14,10 @@ class BotInfo:
         if isinstance(type(other), BotInfo):  # Makes sure a BotInfo instance was passed in as other
             raise ValueError("Error: Required to pass in a BotInfo instance")
         else:
-            if self.ip != other.ip:  # Makes sure their IPs do not equal each other
-                for dns_ip in self.dns_ips:  # Loops through its DNS IPs
-                    if dns_ip in other.dns_ips:  # Compares each DNS IP with the other BotInfo's DNS IPs
+            # Compares each DNS IP in this instance with the other BotInfo's DNS IPs
+            if self.ip != other.ip:
+                for dns_ip in self.dns_ips:
+                    if dns_ip in other.dns_ips:
                         # Adds to the dictionary
                         if dns_ip not in data:
                             data[dns_ip] = set()
