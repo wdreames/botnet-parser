@@ -16,7 +16,7 @@ When parsing through the master files, my program looks for 3 main things to out
 IP Addresses repeat with a different domain. I'm not entirely sure what this indicates, but I found it interesting.
 Secondly, it finds how many different IPs point to the same IP created by the DNS Host. Depending on what botnet is
 being parsed, it could either be a P2P botnet, or a botnet similar in structure to an IRC botnet in which there is a
-central C&C server. In the P2P system, seeing multiple IPs being diricted to a single IP could indicate that the IP
+central C&C server. In the P2P system, seeing multiple IPs being directed to a single IP could indicate that the IP
 created by the DNS Host is actually another bot inside the botnet. As for an IRC system, or similar, this could
 indicate that the IP created by the DNS Host is one of the C&C servers, as there are multiple bots in the botnet that
 are accessing it. Through the knowledge of this information, we may be able to find the IP Address of either the C&C
