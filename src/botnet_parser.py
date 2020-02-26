@@ -85,10 +85,8 @@ def run_master_data(web_url, name):
 # Collects and outputs data from the C2 IP Feed
 def run_c2_data(original_url):
     web_url = original_url + 'c2-ipmasterlist.txt'
-    # print(web_url, 'https://osint.bambenekconsulting.com/feeds/c2-ipmasterlist.txt')
     ips = {}
     response = requests.get(web_url)  # Connect to the url
-    # print(response.text)
     file = response.text.split('\n')  # Split the text into separate lines
     csv_reader = csv.reader(file)  # Creates a csv
     for data in csv_reader:
