@@ -57,7 +57,6 @@ def run_master_data(web_url, name):
             for ip in parser.repeating_ips_count:
                 print(
                     "{:15} appeared {:2.0f} times under a different domain".format(ip, parser.repeating_ips_count[ip]))
-
             print()
 
         if parser.multiple_pointers != {}:
@@ -69,7 +68,6 @@ def run_master_data(web_url, name):
         print()
         parser.find_countries()
         print()
-
         print("Amount of IPs originating from each country:")
         for key in parser.countries:
             if parser.countries[key] == 1:
@@ -144,7 +142,7 @@ class BotnetParser:
     # Gathers data through the use of a csv
     def gather_master_data(self, csv_reader):
         for data in csv_reader:
-            # If the line is commented out, do not attempt to retrieve data
+            # Don't retrieve data from commented lines
             if len(data) > 0 and data[0][0] != '#':
 
                 # Gathers the data
