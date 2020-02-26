@@ -7,13 +7,10 @@ import requests
 import collections
 # For certain IDEs, the following must be "from src.bot_info import BotInfo"
 # For terminal use, however, the following must be "from bot_info import BotInfo"
-from src.bot_info import BotInfo
+from bot_info import BotInfo
 from ip2geotools.databases.noncommercial import DbIpCity
 from ip2geotools.errors import InvalidRequestError
 
-
-# TODO: Add a README
-# TODO: Sort dictionaries
 
 # Gathers input from the user
 def gather_input(original_url):
@@ -31,16 +28,18 @@ def gather_input(original_url):
 # Tests to ensure the input from the user is valid then collects the appropriate data
 def test_input(parse_this, original_url):
     print()  # Makes a space between input and output
+    name = parse_this.lower().strip()
     if parse_this.lower() == 'exit' or parse_this.lower() == 'quit':
         print('Done.')
         exit()
     elif parse_this.upper().strip() == "C2 IP FEED":
         run_c2_data(original_url)
     else:
-        append = "{}-master.txt".format(parse_this.lower().strip())
+        append = "{}-master.txt".format(name)
         web_url = original_url + append
+        print("Accessing {}'s master feed ...\n".format(name.capitalize()))
         if requests.get(web_url):  # Tests if the given input exists
-            run_master_data(web_url, parse_this.lower().capitalize())
+            run_master_data(web_url, name.capitalize())
         else:
             print("Invalid input. Please enter the name of a intel feed on the given website.")
     gather_input(original_url)
