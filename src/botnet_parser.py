@@ -19,7 +19,7 @@ def gather_input(original_url):
     print("\nThis program may be used to parse through and output relevant information from {}".format(original_url))
     print("You may choose to either parse through \"C2 IP Feed\", which contains a list of every IP from all of the\n"
           "given subsets, or parse through any of the master lists underneath Family-Specific Feeds on the website.")
-    print("For example, an input may look like \"Bamital\", if you wished to parse through Bamital's master list,\n"
+    print("For example, an input may look like \"Virut\", if you wished to parse through Virut's master list,\n"
           "or \"Ramnit\", if you wished to parse through Ramnit's master list.")
     print("Enter \"exit\" to exit the program")
     test_input(input("Please enter what you would like to parse through: "), original_url)
@@ -31,6 +31,7 @@ def test_input(parse_this, original_url):
     name = parse_this.lower().strip()
     if parse_this.lower() != 'exit' and parse_this.lower() != 'quit':
         if parse_this.upper().strip() == "C2 IP FEED":
+            print("Accessing C2 IP Feed ...\n")
             run_c2_data(original_url)
         else:
             append = "{}-master.txt".format(name)
@@ -47,28 +48,34 @@ def test_input(parse_this, original_url):
 def run_master_data(web_url, name):
     parser = BotnetParser()
     parser.master_data_from_url(web_url)
-    parser.find_similar_dns_ips()
+    parser.find_similar_dns_info()
 
     print("Parsing data for {}:\n".format(name))
 
     if parser.ips:  # Ensures data has been found before outputting data
         if parser.repeating_ips_count != {}:
-            print("Systems with repeating IPs but different domains:")
+            print("Systems with repeating C&C IPs but different domains:")
             for ip in parser.repeating_ips_count:
                 print(
                     "{:15} appeared {:2.0f} times under a different domain".format(ip, parser.repeating_ips_count[ip]))
             print()
 
-        if parser.multiple_pointers != {}:
-            print("List of all DNS IPs that have different IPs pointing to it:")
-            for key in parser.multiple_pointers:
-                print('{:15} is pointed to by {:2.0f} IPs: {}'.format(key, len(parser.multiple_pointers[key]),
-                                                                      parser.multiple_pointers[key]))
+        if parser.multiple_host_uses != {}:
+            print("List of all DNS Hosts that have multiple C&C IPs using it:")
+            for key in parser.multiple_host_uses:
+                print('{:40} is used by {:2.0f} IPs: {}'.format(key, len(parser.multiple_host_uses[key]),
+                                                                parser.multiple_host_uses[key]))
+        print()
+        if parser.multiple_ip_uses != {}:
+            print("List of all DNS IPs that have multiple C&C IPs it:")
+            for key in parser.multiple_ip_uses:
+                print('{:15} is used by {:2.0f} IPs: {}'.format(key, len(parser.multiple_ip_uses[key]),
+                                                                parser.multiple_ip_uses[key]))
 
         print()
         parser.find_countries()
         print()
-        print("Amount of IPs originating from each country:")
+        print("Amount of C&C IPs originating from each country:")
         for key in parser.countries:
             if parser.countries[key] == 1:
                 print('{} had  1 occurrence'.format(key))
@@ -107,7 +114,7 @@ def run_c2_data(original_url):
     print("Parsing C2 IP Feed:\n")
 
     print("Total of {} repeating IPs.\n".format(len(repeating_ips)))
-    print("All IPs that repeat across differing systems:")
+    print("All C&C IPs that repeat across differing systems:")
     for ip in repeating_ips:
         print('{:15} was included in {}'.format(ip, repeating_ips[ip]))
 
@@ -118,11 +125,12 @@ class BotnetParser:
     def __init__(self):
         # Using sets and dictionaries due to the fact that they are hashed and have O(1) containment
         self.domains = set()  # Contains a single entry of all domains
-        self.bots = {}  # Dictionary that contains each IP and the information it points to as a BotInfo instance
+        self.bots = {}  # Dictionary that contains each C&C IP and the information it uses to as a BotInfo instance
         self.ips = []  # List containing all ips used to find specific keys quickly
-        self.repeating_ips_count = {}  # Only contains the ips that occur more than once and the number of occurrences
+        self.repeating_ips_count = {}  # Contains the C&C IPs that occur more than once and the number of occurrences
         self.countries = {}  # Dictionary that contains country names and how many IPs are from that country
-        self.multiple_pointers = {}  # Contains each dns_IP and a set containing each host IP that points to it
+        self.multiple_host_uses = {}  # Contains each DNS Host and a set containing each C&C IP that points to it
+        self.multiple_ip_uses = {}  # Contains each DNS IP and a set containing each C&C IP that points to it
         self.can_find_locations = True  # Only allowed to find a certain amount of locations with the library I am using
 
     # Prepares a url for parsing by a csv
@@ -149,24 +157,24 @@ class BotnetParser:
                 current_domain = data[0]
                 current_ips = data[1].split('|')
                 # Don't use lines with missing data
-                if current_ips[0] == '':
-                    break
-                current_dns_ips = data[3].split('|')
+                if current_ips[0] != '':
+                    current_dns_hosts = data[2].split('|')
+                    current_dns_ips = data[3].split('|')
 
-                # Stores the data
-                for current_ip in current_ips:
-                    # Adds ips that are the same but have different domains to the unique_ip_count dictionary
-                    # Since ips are used as the key for bots, we can use that to test if the ip already exists
-                    if current_domain not in self.domains and current_ip in self.bots:
-                        if current_ip in self.repeating_ips_count:
-                            self.repeating_ips_count[current_ip] += 1
+                    # Stores the data
+                    for current_ip in current_ips:
+                        # Adds ips that are the same but have different domains to the unique_ip_count dictionary
+                        # Since ips are used as the key for bots, we can use that to test if the ip already exists
+                        if current_domain not in self.domains and current_ip in self.bots:
+                            if current_ip in self.repeating_ips_count:
+                                self.repeating_ips_count[current_ip] += 1
+                            else:
+                                # Sets it equal to two in order to include the ip inside the set and the ip being compared
+                                self.repeating_ips_count[current_ip] = 2
                         else:
-                            # Sets it equal to two in order to include the ip inside the set and the ip being compared
-                            self.repeating_ips_count[current_ip] = 2
-                    else:
-                        self.ips.append(current_ip)
-                        self.bots[current_ip] = BotInfo(current_ip, current_dns_ips)
-                self.domains.add(current_domain)
+                            self.ips.append(current_ip)
+                            self.bots[current_ip] = BotInfo(current_ip, current_dns_hosts, current_dns_ips)
+                    self.domains.add(current_domain)
 
     # Finds the location of each ip address that has been found
     # Because finding the location is so time consuming, it is done separately
@@ -202,14 +210,21 @@ class BotnetParser:
             self.can_find_locations = False
 
     # Finds DNS IP Addresses that are found in multiple lines, as well as what original IP they are connected to
-    def find_similar_dns_ips(self):
+    def find_similar_dns_info(self):
         # Loops through each combination of ip lists, then compares the DNS IPs using a method from BotInfo
         for i in range(0, len(self.ips) - 1):
             for j in range(i + 1, len(self.ips)):
-                self.bots[self.ips[i]].same_dns_ips(self.bots[self.ips[j]], self.multiple_pointers)
+                self.bots[self.ips[i]].same_dns_hosts(self.bots[self.ips[j]], self.multiple_host_uses)
+                self.bots[self.ips[i]].same_dns_ips(self.bots[self.ips[j]], self.multiple_ip_uses)
+
 
 
 if __name__ == '__main__':
     original_url = "https://osint.bambenekconsulting.com/feeds/"
     gather_input(original_url)
+    # parser = BotnetParser()
+    # file_path = "../test_data/bedep-master.csv"
+    # parser._master_data_from_file(file_path)
+    # parser.find_similar_dns_ips()
+    # print(parser.multiple_pointers)
     print('Done.')
