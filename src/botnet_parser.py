@@ -15,7 +15,7 @@ from ip2geotools.errors import InvalidRequestError
 # Gathers input from the user
 def gather_input(original_url):
     print()
-    print("-" * 50)
+    print("-" * 50)  # Separates output
     print("\nThis program may be used to parse through and output relevant information from {}".format(original_url))
     print("You may choose to either parse through \"C2 IP Feed\", which contains a list of every IP from all of the\n"
           "given subsets, or parse through any of the master lists underneath Family-Specific Feeds on the website.")
@@ -169,7 +169,7 @@ class BotnetParser:
                             if current_ip in self.repeating_ips_count:
                                 self.repeating_ips_count[current_ip] += 1
                             else:
-                                # Sets it equal to two in order to include the ip inside the set and the ip being compared
+                                # Sets it equal to 2 in order to include the ip inside the set and the ip being compared
                                 self.repeating_ips_count[current_ip] = 2
                         else:
                             self.ips.append(current_ip)
@@ -218,13 +218,7 @@ class BotnetParser:
                 self.bots[self.ips[i]].same_dns_ips(self.bots[self.ips[j]], self.multiple_ip_uses)
 
 
-
 if __name__ == '__main__':
     original_url = "https://osint.bambenekconsulting.com/feeds/"
     gather_input(original_url)
-    # parser = BotnetParser()
-    # file_path = "../test_data/bedep-master.csv"
-    # parser._master_data_from_file(file_path)
-    # parser.find_similar_dns_ips()
-    # print(parser.multiple_pointers)
     print('Done.')
