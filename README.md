@@ -4,17 +4,15 @@
 This program was made to parse through data on https://osint.bambenekconsulting.com/feeds/ and output relevant
 information. This website contains intel feeds for what appear to be various botnets. Each individual botnet gets their
 own set of files that contain information about the domains, IP Addresses created through the use of a Name Service
-(NS) Server, the NS Host domain, and the NS IP Address. It is possible that the IPs produced by the NS are the IPs of
-Command and Control (C&C) Servers in an IRC botnet, or another form of a botnet which uses a C&C server. All of this
-information is contained inside the "master" file, which is the file my program is primarily concerned with. My program
-parses through all the information and pieces together potential pieces of important information by using the domains,
-IP Addresses, and IPs produced by the DNS Hosts of each individual bot in the botnet.
+(NS) Server, the NS Host domain, and the NS IP Address. My program parses through all the data and pieces together
+potential pieces of important information.
 
 **What my program is finding:**
 
 When parsing through the master files, my program looks for 3 main things to output. Firstly, it looks to see how many
 IP Addresses repeat with a different domain. As these IPs are likely the IPs associated with a C&C server, this could
-tell us which servers are being used more often than others, and which ones are a higher priority to take down.
+tell us which servers are being used more often than others, and which ones could potentially have a higher priority to
+take down.
 Secondly, it finds how many different C&Cs are using the same NS Server. This is split into two main parts, C&C servers
 that share similar NS Host domains, and C&C Servers that share similar NS IP Addresses. This could help us understand
 which NS Servers are being used more frequently than others, and would allow us to know where most of the C&C data is
